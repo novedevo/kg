@@ -7,7 +7,6 @@ export async function fetchSettings() {
   const syncObject = await browser.storage.local.get('sync_existing');
   const apiObject = await browser.storage.local.get('api_token');
   const apiEngineObject = await browser.storage.local.get('api_engine');
-  const summaryTypeObject = await browser.storage.local.get('summary_type');
   const targetLanguageObject =
     await browser.storage.local.get('target_language');
   const privacyConsentObject =
@@ -21,7 +20,6 @@ export async function fetchSettings() {
         : true,
     api_token: apiObject?.api_token,
     api_engine: apiEngineObject?.api_engine,
-    summary_type: summaryTypeObject?.summary_type,
     target_language: targetLanguageObject?.target_language,
     privacy_consent:
       typeof privacyConsentObject?.privacy_consent !== 'undefined'

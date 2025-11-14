@@ -1,6 +1,5 @@
 import {
   fetchSettings,
-  getActiveTab,
   requestActiveTabPermission,
 } from './lib/utils.js';
 
@@ -152,30 +151,6 @@ async function setup() {
     return;
   }
 
-  const fastGptSection = document.querySelector('#fastgpt');
-  if (!fastGptSection) {
-    console.error('Could not find fastgpt section');
-    return;
-  }
-
-  const fastGptQueryInput = document.querySelector('#fastgpt_query');
-  if (!fastGptQueryInput) {
-    console.error('Could not find fastgpt input');
-    return;
-  }
-
-  const summarizeSection = document.querySelector('#summarize');
-  if (!summarizeSection) {
-    console.error('Could not find summarize section');
-    return;
-  }
-
-  const summarizePageButton = document.querySelector('#summarize_page');
-  if (!summarizePageButton) {
-    console.error('Could not find summarize page button');
-    return;
-  }
-
   const apiParamElements = document.querySelectorAll('.api_param');
   if (!apiParamElements.length) {
     console.error('Could not find api param divs');
@@ -192,12 +167,6 @@ async function setup() {
     return;
   }
 
-  const summaryTypeSelect = document.querySelector('#summary_type');
-  if (!summaryTypeSelect) {
-    console.error('No summary type select found.');
-    return;
-  }
-
   const targetLanguageSelect = document.querySelector('#target_language');
   if (!targetLanguageSelect) {
     console.error('No target language select found.');
@@ -207,12 +176,6 @@ async function setup() {
   const engineSelect = document.querySelector('#engine');
   if (!engineSelect) {
     console.error('No engine select found.');
-    return;
-  }
-
-  const summarizeOptions = document.querySelectorAll('.summarize_option');
-  if (summarizeOptions.length === 0) {
-    console.error('No summarize options found.');
     return;
   }
 
@@ -265,8 +228,6 @@ async function setup() {
 
     const api_engine = apiEngineSelect.value;
 
-    const summary_type = summaryTypeSelect.value;
-
     const target_language = targetLanguageSelect.value;
 
     saveTokenButton.innerText = 'Saving...';
@@ -277,7 +238,6 @@ async function setup() {
         token,
         api_token,
         api_engine,
-        summary_type,
         target_language,
       });
     } catch (error) {
@@ -296,97 +256,22 @@ async function setup() {
       showSettingsIcon.style.display = '';
       closeSettingsIcon.style.display = 'none';
       tokenDiv.style.display = 'none';
-      if (tokenInput.value) {
-        fastGptSection.style.display = '';
-
-        const hasPermissions = await browser.permissions.contains({
-          permissions: ['activeTab'],
-        });
-
-        if (!hasPermissions) {
-          summarizeSection.style.display = 'none';
-          requestPermissionsSection.style.display = '';
-        } else {
-          summarizeSection.style.display = '';
-          requestPermissionsSection.style.display = 'none';
-        }
-      } else {
-        fastGptSection.style.display = 'none';
-      }
       advancedToggle.setAttribute('title', 'Advanced settings');
     } else {
       showSettingsIcon.style.display = 'none';
       closeSettingsIcon.style.display = '';
       tokenDiv.style.display = '';
-      summarizeSection.style.display = 'none';
-      fastGptSection.style.display = 'none';
       requestPermissionsSection.style.display = 'none';
       advancedToggle.setAttribute('title', 'Close advanced settings');
     }
   }
   advancedToggle.addEventListener('click', () => toggleAdvancedDisplay());
 
-  async function handleSummarizePageButtonClick(event) {
-    event.preventDefault();
-    event.stopPropagation();
-
-    const tab = await getActiveTab();
-
-    if (!tab) {
-      console.error('No tab/url found.');
-      return;
-    }
-
-    const { url } = tab;
-
-    const searchParams = {
-      url,
-      summary_type: summaryTypeSelect.value,
-      target_language: targetLanguageSelect.value,
-      token: tokenInput.value,
-      api_token: apiTokenInput.value,
-      api_engine: engineSelect.value,
-    };
-
-    const urlSearchParams = new URLSearchParams({ ...searchParams });
-
-    await browser.windows.create({
-      url: `${browser.runtime.getURL(
-        'src/summarize_result.html',
-      )}?${urlSearchParams.toString()}`,
-      focused: true,
-      width: 600,
-      height: 500,
-      type: 'popup',
-    });
-
-    // Save new summary_type preferences
-    await browser.runtime.sendMessage({
-      type: 'save_token',
-      token: searchParams.token,
-      api_token: searchParams.api_token,
-      api_engine: searchParams.api_engine,
-      summary_type: searchParams.summary_type,
-      target_language: searchParams.target_language,
-    });
-
-    // Give the browser time to save the info before closing the window (when await isn't respected)
-    setTimeout(() => window.close(), 100);
-  }
-
-  summarizePageButton.addEventListener('click', handleSummarizePageButtonClick);
-
   async function handleRequestPermissionsButtonClick(event) {
     event.preventDefault();
     event.stopPropagation();
 
-    const permissionGranted = await requestActiveTabPermission();
-
-    if (!permissionGranted) {
-      alert(
-        "You can't summarize without allowing access to the currently active tab.",
-      );
-    }
+    await requestActiveTabPermission();
 
     window.close();
   }
@@ -417,7 +302,6 @@ async function setup() {
     api_token,
     sync_existing,
     api_engine,
-    summary_type,
     target_language,
     privacy_consent,
   } = {}) {
@@ -426,24 +310,6 @@ async function setup() {
 
       if (api_token) {
         apiTokenInput.value = api_token;
-      }
-
-      if (tokenDiv.style.display === 'none') {
-        const hasPermissions = await browser.permissions.contains({
-          permissions: ['activeTab'],
-        });
-
-        if (!hasPermissions) {
-          summarizeSection.style.display = 'none';
-          requestPermissionsSection.style.display = '';
-        } else {
-          summarizeSection.style.display = '';
-          requestPermissionsSection.style.display = 'none';
-        }
-
-        fastGptSection.style.display = '';
-      } else {
-        fastGptSection.style.display = 'none';
       }
 
       if (sync_existing) {
@@ -460,10 +326,6 @@ async function setup() {
 
       if (api_engine) {
         apiEngineSelect.value = api_engine;
-      }
-
-      if (summary_type) {
-        summaryTypeSelect.value = summary_type;
       }
 
       if (target_language) {
@@ -562,28 +424,6 @@ async function setup() {
         saveTokenButton.innerText = 'Save settings';
       }, 2000);
 
-      if (tokenDiv.style.display === 'none') {
-        if (data.token) {
-          const hasPermissions = await browser.permissions.contains({
-            permissions: ['activeTab'],
-          });
-
-          fastGptSection.style.display = '';
-
-          if (!hasPermissions) {
-            summarizeSection.style.display = 'none';
-            requestPermissionsSection.style.display = '';
-          } else {
-            summarizeSection.style.display = '';
-            requestPermissionsSection.style.display = 'none';
-          }
-        } else {
-          summarizeSection.style.display = 'none';
-          requestPermissionsSection.style.display = 'none';
-          fastGptSection.style.display = 'none';
-        }
-      }
-
       if (data.api_token) {
         apiParamElements.forEach((element) => {
           element.style.display = '';
@@ -604,14 +444,6 @@ async function setup() {
     }
   });
 
-  if (fastGptSection.style.display !== 'none') {
-    fastGptQueryInput.focus();
-  }
-
-  // Close popup after submitting fastGpt
-  fastGptSection.querySelector('form').addEventListener('submit', () => {
-    setTimeout(() => window.close(), 50); // Without this timeout, the browser opens a new window instead of a new tab
-  });
 
   // Close popup after clicking on top link
   linksDiv.querySelectorAll('a').forEach((anchor) =>

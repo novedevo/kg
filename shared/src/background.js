@@ -10,7 +10,6 @@ let sessionToken = undefined;
 let syncSessionFromExisting = true;
 let sessionApiToken = undefined;
 let sessionApiEngine = undefined;
-let sessionSummaryType = undefined;
 let sessionTargetLanguage = undefined;
 let sessionPrivacyConsent = false;
 let IS_CHROME = true;
@@ -31,7 +30,6 @@ async function saveToken(
     api_token,
     api_engine,
     sync,
-    summary_type,
     target_language,
     privacy_consent,
   } = {},
@@ -42,8 +40,6 @@ async function saveToken(
     typeof api_token !== 'undefined' ? api_token : sessionApiToken;
   sessionApiEngine =
     typeof api_engine !== 'undefined' ? api_engine : sessionApiEngine;
-  sessionSummaryType =
-    typeof summary_type !== 'undefined' ? summary_type : sessionSummaryType;
   sessionTargetLanguage =
     typeof target_language !== 'undefined'
       ? target_language
@@ -67,7 +63,6 @@ async function saveToken(
       sync_existing: shouldSync,
       api_token: sessionApiToken,
       api_engine: sessionApiEngine,
-      summary_type: sessionSummaryType,
       target_language: sessionTargetLanguage,
       privacy_consent: sessionPrivacyConsent,
     });
@@ -89,7 +84,6 @@ async function saveToken(
     token: sessionToken,
     api_token: sessionApiToken,
     api_engine: sessionApiEngine,
-    summary_type: sessionSummaryType,
     target_language: sessionTargetLanguage,
     privacy_consent: sessionPrivacyConsent,
   });
@@ -189,7 +183,6 @@ async function loadStorageData() {
     sync_existing,
     api_token,
     api_engine,
-    summary_type,
     target_language,
     privacy_consent,
   } = await fetchSettings();
@@ -201,7 +194,6 @@ async function loadStorageData() {
 
   sessionApiToken = api_token;
   sessionApiEngine = api_engine;
-  sessionSummaryType = summary_type;
   sessionTargetLanguage = target_language;
 
   if (!IS_CHROME) sessionPrivacyConsent = privacy_consent;
