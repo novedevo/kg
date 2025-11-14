@@ -24,8 +24,12 @@
     "storage",
     "contextMenus"
   ],
-  "optional_permissions": ["activeTab"],
-  "host_permissions": ["https://*.kagi.com/*"],
+  "optional_permissions": [
+    "activeTab"
+  ],
+  "host_permissions": [
+    "https://*.kagi.com/*"
+  ],
   "chrome_settings_overrides": {
     "search_provider": {
       "name": "Kagi",
@@ -41,9 +45,6 @@
   "commands": {
     "_execute_action": {
       "description": "Open the Kagi extension"
-    },
-    "summarize-active-page": {
-      "description": "Summarize the currently active page"
     }
   },
   "browser_specific_settings": {

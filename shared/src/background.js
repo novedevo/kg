@@ -1,7 +1,5 @@
 import {
-  summarizeContent,
   fetchSettings,
-  requestActiveTabPermission,
 } from './lib/utils.js';
 
 if (!globalThis.browser) {
@@ -97,21 +95,6 @@ async function saveToken(
   });
 }
 
-async function summarizePage(options) {
-  const { summary, success, timeSavedInMinutes } =
-    await summarizeContent(options);
-
-  if (summary) {
-    await browser.runtime.sendMessage({
-      type: 'summary_finished',
-      summary,
-      success,
-      url: options.url,
-      timeSavedInMinutes,
-    });
-  }
-}
-
 /*
  * Adds an Authorization header to all Kagi requests.
  * This allows us to provide authentication without having to
@@ -194,25 +177,9 @@ browser.runtime.onMessage.addListener(async (data) => {
       }
       break;
     }
-    case 'summarize_page': {
-      await summarizePage(data);
-      break;
-    }
     default:
       console.debug(`Invalid type received: ${data.type}`);
       break;
-  }
-});
-
-browser.commands?.onCommand.addListener(async (command) => {
-  if (command === 'summarize-active-page') {
-    await browser.windows.create({
-      url: browser.runtime.getURL('src/summarize_result.html'),
-      focused: true,
-      width: 600,
-      height: 500,
-      type: 'popup',
-    });
   }
 });
 
@@ -242,22 +209,6 @@ async function loadStorageData() {
 
 loadStorageData();
 
-// The function kagiSummarize is called when clicking the context menu item.
-async function kagiSummarize(info) {
-  // The linkUrl will be undefined if function is triggered by a page event. In that case, the url is taken from pageUrl
-  const url = info.linkUrl || info.pageUrl;
-
-  await browser.windows.create({
-    url: browser.runtime.getURL(
-      `src/summarize_result.html?url=${encodeURIComponent(url)}`,
-    ),
-    focused: true,
-    width: 600,
-    height: 500,
-    type: 'popup',
-  });
-}
-
 function kagiImageSearch(info) {
   const imageUrl = info.srcUrl;
   browser.tabs.create({
@@ -267,13 +218,6 @@ function kagiImageSearch(info) {
 
 // FF Android does not support context menus
 if (browser.contextMenus !== undefined) {
-  // Create a context menu item.
-  browser.contextMenus.create({
-    id: 'kagi-summarize',
-    title: 'Kagi Summarize',
-    contexts: ['link', 'page'], // Show the menu item when clicked on a link or elsewhere on page with no matching contexts
-  });
-
   browser.contextMenus.create({
     id: 'kagi-image-search',
     title: 'Kagi Image Search',
@@ -282,13 +226,7 @@ if (browser.contextMenus !== undefined) {
 
   // Add a listener for the context menu item.
   browser.contextMenus.onClicked.addListener(async (info, tab) => {
-    if (info.menuItemId === 'kagi-summarize') {
-      if (!IS_CHROME) {
-        // Attach permission request to user input handler for Firefox
-        await requestActiveTabPermission();
-      }
-      kagiSummarize(info, tab);
-    } else if (info.menuItemId === 'kagi-image-search') {
+    if (info.menuItemId === 'kagi-image-search') {
       kagiImageSearch(info, tab);
     }
   });
