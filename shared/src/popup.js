@@ -125,73 +125,15 @@ async function setup() {
     this.value ? this.setSelectionRange(0, this.value.length) : null,
   );
 
-  const apiTokenInput = document.querySelector('#api_token_input');
-  if (!apiTokenInput) {
-    console.error('Could not set API token because no input exists');
-    return;
-  }
-
-  apiTokenInput.addEventListener('focus', (event) => {
-    event.target.select();
-  });
-
-  apiTokenInput.addEventListener('click', () =>
-    this.value ? this.setSelectionRange(0, this.value.length) : null,
-  );
-
-  const apiEngineSelect = document.querySelector('#engine');
-  if (!apiEngineSelect) {
-    console.error('Could not set API engine because no select exists');
-    return;
-  }
-
   const advancedToggle = document.querySelector('#advanced');
   if (!advancedToggle) {
     console.error('Could not find advanced toggle');
     return;
   }
 
-  const apiParamElements = document.querySelectorAll('.api_param');
-  if (!apiParamElements.length) {
-    console.error('Could not find api param divs');
-    return;
-  }
-
-  apiParamElements.forEach((element) => {
-    element.style.display = 'none';
-  });
-
   const saveTokenButton = document.querySelector('#token_save');
   if (!saveTokenButton) {
     console.error('Could not find save settings button');
-    return;
-  }
-
-  const targetLanguageSelect = document.querySelector('#target_language');
-  if (!targetLanguageSelect) {
-    console.error('No target language select found.');
-    return;
-  }
-
-  const engineSelect = document.querySelector('#engine');
-  if (!engineSelect) {
-    console.error('No engine select found.');
-    return;
-  }
-
-  const requestPermissionsSection = document.querySelector(
-    '#request_permissions',
-  );
-  if (!requestPermissionsSection) {
-    console.error('No request permissions section found.');
-    return;
-  }
-
-  const requestPermissionsButton = document.querySelector(
-    '#request_permissions_button',
-  );
-  if (!requestPermissionsButton) {
-    console.error('No request permissions button found.');
     return;
   }
 
@@ -224,21 +166,12 @@ async function setup() {
       if (token) tokenInput.value = token;
     }
 
-    const api_token = apiTokenInput.value;
-
-    const api_engine = apiEngineSelect.value;
-
-    const target_language = targetLanguageSelect.value;
-
     saveTokenButton.innerText = 'Saving...';
 
     try {
       await browser.runtime.sendMessage({
         type: 'save_token',
-        token,
-        api_token,
-        api_engine,
-        target_language,
+        token
       });
     } catch (error) {
       console.error(error);
@@ -261,75 +194,23 @@ async function setup() {
       showSettingsIcon.style.display = 'none';
       closeSettingsIcon.style.display = '';
       tokenDiv.style.display = '';
-      requestPermissionsSection.style.display = 'none';
       advancedToggle.setAttribute('title', 'Close advanced settings');
     }
   }
   advancedToggle.addEventListener('click', () => toggleAdvancedDisplay());
 
-  async function handleRequestPermissionsButtonClick(event) {
-    event.preventDefault();
-    event.stopPropagation();
-
-    await requestActiveTabPermission();
-
-    window.close();
-  }
-
-  const platformInfo = await browser.runtime.getPlatformInfo();
-  const browserInfo =
-    typeof browser.runtime.getBrowserInfo === 'function' &&
-    (await browser.runtime.getBrowserInfo());
-
-  // Note, _hoping_ by 119 this works, but there's no guarantee.
-  if (
-    platformInfo.os === 'android' &&
-    browserInfo?.version &&
-    Number.parseInt(browserInfo.version, 10) <= 118
-  ) {
-    requestPermissionsButton.addEventListener('click', () => {
-      alert('Cannot request activeTab permission on Android yet.');
-    });
-  } else {
-    requestPermissionsButton.addEventListener(
-      'click',
-      handleRequestPermissionsButtonClick,
-    );
-  }
-
   async function handleGetData({
     token,
-    api_token,
     sync_existing,
-    api_engine,
-    target_language,
     privacy_consent,
   } = {}) {
     if ((privacy_consent || IS_CHROME) && token) {
       tokenInput.value = token;
 
-      if (api_token) {
-        apiTokenInput.value = api_token;
-      }
-
       if (sync_existing) {
         setStatus('auto_token');
       } else {
         setStatus('manual_token');
-      }
-
-      if (api_token) {
-        apiParamElements.forEach((element) => {
-          element.style.display = '';
-        });
-      }
-
-      if (api_engine) {
-        apiEngineSelect.value = api_engine;
-      }
-
-      if (target_language) {
-        targetLanguageSelect.value = target_language;
       }
 
       const hasIncognitoAccess =
@@ -424,15 +305,6 @@ async function setup() {
         saveTokenButton.innerText = 'Save settings';
       }, 2000);
 
-      if (data.api_token) {
-        apiParamElements.forEach((element) => {
-          element.style.display = '';
-        });
-      } else {
-        apiParamElements.forEach((element) => {
-          element.style.display = 'none';
-        });
-      }
     } else if (data.type === 'reset') {
       setStatus('no_session');
       tokenDiv.style.display = 'none';

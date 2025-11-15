@@ -5,10 +5,6 @@ if (!globalThis.browser) {
 export async function fetchSettings() {
   const sessionObject = await browser.storage.local.get('session_token');
   const syncObject = await browser.storage.local.get('sync_existing');
-  const apiObject = await browser.storage.local.get('api_token');
-  const apiEngineObject = await browser.storage.local.get('api_engine');
-  const targetLanguageObject =
-    await browser.storage.local.get('target_language');
   const privacyConsentObject =
     await browser.storage.local.get('privacy_consent');
 
@@ -18,9 +14,6 @@ export async function fetchSettings() {
       typeof syncObject?.sync_existing !== 'undefined'
         ? syncObject.sync_existing
         : true,
-    api_token: apiObject?.api_token,
-    api_engine: apiEngineObject?.api_engine,
-    target_language: targetLanguageObject?.target_language,
     privacy_consent:
       typeof privacyConsentObject?.privacy_consent !== 'undefined'
         ? privacyConsentObject.privacy_consent
